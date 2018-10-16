@@ -1,3 +1,7 @@
 package com.example.michael.newsarticlesapp
 
-data class Article(/*val id: Int, */val title: String, val date: String, val urlArticle: String)
+data class Article(val title: String,
+                   val url: String,
+                   val urlToImage: String,
+                   val date: String
+)
