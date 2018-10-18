@@ -12,12 +12,6 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <!--<Button
-            android:id="@+id/btnGetArticles"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="記事取得"
-            tools:ignore="HardcodedText" />-->
         <ListView
             android:id="@+id/articles_list"
             android:layout_width="match_parent"
