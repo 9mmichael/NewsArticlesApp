@@ -1,25 +1,42 @@
 package com.example.michael.newsarticlesapp
 
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.customtabs.CustomTabsIntent
+import android.util.Log
 import android.widget.ListAdapter
+import android.widget.ListView
+import android.widget.TextView
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
 class MainActivity : AppCompatActivity() {
+    val listArticle = ArrayList<Article>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
         val url = "https://newsapi.org/v2/top-headlines?sources=bbc-news&apiKey=150deaae17bd4a07968c8864bffc5e5a"
 
         AsyncTaskHandleJson().execute(url)
+
+        //WebViewを開く
+        articles_list.setOnItemClickListener { parent, view, position, id ->
+            val intentUrl = CustomTabsIntent.Builder().build()
+            intentUrl.launchUrl(this, Uri.parse(listArticle.get(position).url))
+
+        }
+
 
 
     }
@@ -46,31 +63,30 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleJson(jsonString: String?) {
 
-        val jsonArray = JSONObject(jsonString)
+        val allJsonObject = JSONObject(jsonString)
 
-        val articlesJsonArray = jsonArray.getJSONArray("articles")
-
-
-        val list = ArrayList<Article>()
+        val articlesJsonArray = allJsonObject.getJSONArray("articles")
 
         var i = 0
-        while (i < jsonArray.length()) {
+        while (i < allJsonObject.getJSONArray("articles").length()) {
             val jsonObject = articlesJsonArray.getJSONObject(i)
 
-            list.add(Article(
+            listArticle.add(Article(
                     jsonObject.getString("title"),
+                    jsonObject.getString("publishedAt"),
                     jsonObject.getString("url"),
-                    jsonObject.getString("urlToImage"),
-                    jsonObject.getString("publishedAt")
+                    jsonObject.getString("urlToImage")
             ))
 
             i++
         }
 
-        val adapter = ListAdapte(this, list)
+        val adapter = ListAdapte(this, listArticle)
 
         articles_list.adapter = adapter
 
+
     }
+
 
 }
