@@ -1,5 +1,6 @@
 package com.example.michael.newsarticlesapp
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -9,6 +10,7 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.customtabs.CustomTabsIntent
 import android.util.Log
+import android.webkit.WebView
 import android.widget.ListAdapter
 import android.widget.ListView
 import android.widget.TextView
@@ -30,10 +32,19 @@ class MainActivity : AppCompatActivity() {
 
         AsyncTaskHandleJson().execute(url)
 
-        //WebViewを開く
+
+
         articles_list.setOnItemClickListener { parent, view, position, id ->
-            val intentUrl = CustomTabsIntent.Builder().build()
-            intentUrl.launchUrl(this, Uri.parse(listArticle.get(position).url))
+
+            //アプリ内部でWebViewを開く
+            //遷移元と遷移先のActivityがどこかをIntentに渡す
+            val intentWebView = Intent(this@MainActivity, WebActivity::class.java)
+
+            //タップされた記事のURLをextraに渡す
+            intentWebView.putExtra("article_url", listArticle.get(position).url)
+
+            //Intentに設定されたActivityに遷移
+            startActivity(intentWebView, ActivityOptions.makeSceneTransitionAnimation(this@MainActivity).toBundle())
 
         }
 
