@@ -25,5 +25,7 @@ class WebActivity : AppCompatActivity() {
 
         //WebViewで表示したいサイトのURLをloadUrlメソッドで渡す
         webViewArticle.loadUrl(loadArticleUrl)
+
+        //test2
     }
 }
