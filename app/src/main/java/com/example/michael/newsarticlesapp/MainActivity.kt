@@ -39,11 +39,9 @@ class MainActivity : AppCompatActivity() {
 
         val mSwipeRefresh = findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
 
-        val url = "https://newsapi.org/v2/top-headlines?sources=bbc-news&apiKey=150deaae17bd4a07968c8864bffc5e5a"
+        val url = "https://coinnews.jp/wp-json/wp/v2/posts/?page=1&per_page=20"
 
         AsyncTaskHandleJson().execute(url)
-
-
 
         articles_list.setOnItemClickListener { parent, view, position, id ->
             //intentにChrome Custom Tabsのデータを格納
@@ -67,9 +65,11 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        /*mSwipeRefresh.setOnRefreshListener {
-            AsyncTaskHandleJson().execute()
-        }*/
+        /*
+        mSwipeRefresh.setOnRefreshListener {
+            AsyncTaskHandleJson().execute(url)
+        }
+        */
 
     }
 
@@ -98,19 +98,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleJson(jsonString: String?) {
 
-        val allJsonObject = JSONObject(jsonString)
-
-        val articlesJsonArray = allJsonObject.getJSONArray("articles")
+        val allJsonObject = JSONArray(jsonString)
 
         var i = 0
-        while (i < allJsonObject.getJSONArray("articles").length()) {
-            val jsonObject = articlesJsonArray.getJSONObject(i)
+        while (i < allJsonObject.length()) {
+            val jsonObject = allJsonObject.getJSONObject(i)
+            val jsonObjectTitle = jsonObject.getJSONObject("title")
 
             listArticle.add(Article(
-                    jsonObject.getString("title"),
-                    jsonObject.getString("publishedAt"),
-                    jsonObject.getString("url"),
-                    jsonObject.getString("urlToImage")
+                    jsonObjectTitle.getString("rendered"),
+                    jsonObject.getString("date"),
+                    jsonObject.getString("link")
+                    //jsonObject.getString("urlToImage")
             ))
 
             i++
