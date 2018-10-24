@@ -25,16 +25,16 @@ class ListAdapte(val context: Context, val list: ArrayList<Article>/*, val onArt
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         val view: View = LayoutInflater.from(context).inflate(R.layout.row_layout,parent, false)
 
-//        val articleImage = view.findViewById(R.id.article_image) as AppCompatImageView
+        val articleImage = view.findViewById(R.id.article_image) as AppCompatImageView
         val articleTitle = view.findViewById(R.id.article_title) as AppCompatTextView
         val articleDate = view.findViewById(R.id.article_date) as AppCompatTextView
 
-/*        Picasso.get()
+
+        Picasso.get()
                 .load(list[position].urlToImage)
                 .resize(2000,1500)
                 .centerCrop()
                 .into(articleImage)
-*/
 
         if(list[position].title.length > 50) {
             articleTitle.text = list[position].title.substring(0, 50) + "..."
