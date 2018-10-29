@@ -8,10 +8,13 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
+import android.icu.text.SimpleDateFormat
+import android.icu.util.TimeZone
 import android.net.Uri
 import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.provider.CalendarContract
 import android.provider.DocumentsContract
 import android.support.customtabs.CustomTabsIntent
@@ -23,10 +26,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.animation.AnimationUtils
 import android.webkit.WebView
-import android.widget.ImageView
-import android.widget.ListAdapter
-import android.widget.ListView
-import android.widget.TextView
+import android.widget.*
 import com.example.michael.newsarticlesapp.R.style.AppTheme
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_main.*
@@ -41,11 +41,12 @@ import java.io.InputStream
 import java.lang.reflect.Array.get
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.*
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
 
 class MainActivity : AppCompatActivity() {
-    val listArticle = ArrayList<Article>()
+    val listArticle = ArrayList<ListArticle>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,33 +58,20 @@ class MainActivity : AppCompatActivity() {
 
         AsyncTaskHandleJson().execute(urlArticles)
 
-        Log.d("hogehoge", "test")
-        //Log.d("hogehoge2", listArticle.get(0).url)
-
-        //handleHtml(listArticle)
-        handleHtmlTest(listArticle)
+        AsyncTaskHandleJsonHeader().execute(urlArticles)
 
         articles_list.setOnItemClickListener { parent, view, position, id ->
-            //intentにChrome Custom Tabsのデータを格納
-            val intentChrome = CustomTabsIntent.Builder()
-                    //Toolbarにタイトルを表示
-                    .setShowTitle(true)
-                    //Toolbarの色をMainActivityのToolbarと同じ色にする
-                    .setToolbarColor(ContextCompat.getColor(this, R.color.colorPrimary))
-                    //MainActivityからWebViewに遷移するとき
-                    .setStartAnimations(this, R.anim.slide_in_right, R.anim.slide_out_left)
-                    //WebViewからMainActivityに遷移するとき
-                    .setExitAnimations(this, android.R.anim.slide_in_left, android.R.anim.slide_out_right)
-                    //戻るボタンを矢印に変更(未完)
-                    .setCloseButtonIcon(BitmapFactory.decodeResource(resources, R.drawable.ic_arrow_back))
-                    .build()
 
-            //Log.d("戻るボタン", CustomTabsIntent.Builder().setCloseButtonIcon(BitmapFactory.decodeResource(resources, R.drawable.ic_arrow_back)).toString())
+            val intentWebView = Intent(this, ArticleActivity::class.java)
 
-            //intentにURLを渡し、画面遷移
-            intentChrome.launchUrl(this, Uri.parse(listArticle.get(position).url))
-            Log.d("hogehoge3", listArticle.get(0).url)
+            intentWebView.putExtra("article_title", listArticle.get(position).title)
+            intentWebView.putExtra("article_date", listArticle.get(position).date)
+            intentWebView.putExtra("article_url", listArticle.get(position).jsonUrl)
+            intentWebView.putExtra("article_json_url", listArticle.get(position).jsonUrl)
+
+            startActivity(intentWebView)
         }
+
 
         /*
         mSwipeRefresh.setOnRefreshListener {
@@ -93,12 +81,6 @@ class MainActivity : AppCompatActivity() {
 
 
     }
-
-    override fun onStart() {
-        super.onStart()
-
-    }
-
 
 
 
@@ -129,8 +111,19 @@ class MainActivity : AppCompatActivity() {
         var i = 0
         while (i < allJsonObject.length()) {
             val jsonObject = allJsonObject.getJSONObject(i)
+
+            //title
             val jsonObjectTitle = jsonObject.getJSONObject("title")
 
+            //date
+            val articleDateJst = utcToJst(jsonObject.getString("date"))
+
+            //jsonUrl
+            val jsonObjectLinks = jsonObject.getJSONObject("_links")
+            val jsonArraySelf = jsonObjectLinks.getJSONArray("self")
+            val jsonObjectSelf0 = jsonArraySelf.getJSONObject(0)
+
+            //urlToImage
             val jsonObjectEmbedded = jsonObject.getJSONObject("_embedded")
             val jsonArrayMedia = jsonObjectEmbedded.getJSONArray("wp:featuredmedia")
             val jsonObjectMediaDetails0 = jsonArrayMedia.getJSONObject(0)
@@ -138,10 +131,10 @@ class MainActivity : AppCompatActivity() {
             val jsonObjectMediaSizes = jsonObjectMediaDetails.getJSONObject("sizes")
             val jsonObjectImage = jsonObjectMediaSizes.getJSONObject("full")
 
-            listArticle.add(Article(
+            listArticle.add(ListArticle(
                     jsonObjectTitle.getString("rendered"),
-                    jsonObject.getString("date"),
-                    jsonObject.getString("link"),
+                    articleDateJst,
+                    jsonObjectSelf0.getString("href"),
                     jsonObjectImage.getString("source_url")
             ))
 
@@ -154,41 +147,63 @@ class MainActivity : AppCompatActivity() {
 
 
     }
-/*
-    fun handleHtml(arrayList: ArrayList<Article>) {
-        for (i in 0 .. 19) {
-            val documentArticle = Jsoup.connect(arrayList.get(i).url).get()
 
-            listArticleImage.add(ArticleImage(
-                    documentArticle.getElementsByAttributeValue("property", "og:image").text()
-            ))
+    inner class AsyncTaskHandleJsonHeader: AsyncTask<String, String, String?>() {
 
+        //別スレッドで実行
+        override fun doInBackground(vararg params: String?): String? {
+            val infoTotalPages :String?
+            val connection = URL(params[0]).openConnection() as HttpURLConnection
+
+            try {
+
+                //通信開始
+                connection.connect()
+
+                //Headerから総ページ数を取得
+                infoTotalPages = connection.getHeaderField("X-WP-TotalPages")
+            } finally {
+
+                //通信切断
+                connection.disconnect()
+            }
+
+            //onPostExecute()に渡す
+            return infoTotalPages
         }
 
-        val adapterImage = ListImageAdapte(this, listArticleImage)
+        override fun onPostExecute(result: String?) {
 
-        articles_list.adapter = adapterImage
-
-    }
-
-*/
-
-    fun handleHtmlTest(list: ArrayList<Article>) {
-            //val documentArticle = Jsoup.connect(list.get(0).url).get()
-
-
-            //val articleImageTest = documentArticle.getElementsByAttributeValue("property", "og:image").text()
-
+            //doInBackgroundの戻り値をresultに格納
+            super.onPostExecute(result)
 /*
-            Picasso.get()
-                    .load(articleImageTest)
-                    .resize(2000,1500)
-                    .centerCrop()
-                    .into(articleImage)
+            //MainActivityのxmlで作成したTextViewへの参照
+            val textViewTotalPages = findViewById<TextView>(R.id.total_pages)
+
+            //参照したTextViewにdoInBackground()から受け取った総ページ数を格納
+            textViewTotalPages.text = result
 */
-
-
+        }
     }
+
+    fun utcToJst(utc: String): String{
+        val dateFormatBefore = "yyyy-MM-dd'T'HH:mm:ss"
+        val dateFormatAfter = "MM'/'dd'('E')' HH':'mm"
+
+        //String型のフォーマットをSimpleDateFormat型に変換
+        val sdfBefore = SimpleDateFormat(dateFormatBefore)
+        val sdfAfter = SimpleDateFormat(dateFormatAfter)
+
+        sdfBefore.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"))
+        //変換したフォーマットにJSTで取得するという情報を与える
+        sdfAfter.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"))
+
+        //String型の日時のデータをパースしてDate型に変換
+        val dateBefore = sdfBefore.parse(utc)
+
+        return sdfAfter.format(dateBefore).toString()
+    }
+
 /*
 
     inner class AsyncTaskHandleJsonArticle: AsyncTask<String, String, String>() {
