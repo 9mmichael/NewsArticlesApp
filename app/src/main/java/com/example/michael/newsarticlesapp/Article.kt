@@ -1,8 +1,8 @@
 package com.example.michael.newsarticlesapp
 
-data class Article(
+data class ListArticle(
         val title: String,
         val date: String,
-        val url: String,
+        val jsonUrl: String,
         var urlToImage: String
 )

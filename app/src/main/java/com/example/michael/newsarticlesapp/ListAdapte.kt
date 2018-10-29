@@ -20,7 +20,7 @@ import java.util.*
 import java.text.ParseException
 import java.time.format.DateTimeFormatter
 
-class ListAdapte(val context: Context, val list: ArrayList<Article>/*, val onArticleClicked: (Article) -> Unit*/): BaseAdapter() {
+class ListAdapte(val context: Context, val list: ArrayList<ListArticle>/*, val onArticleClicked: (Article) -> Unit*/): BaseAdapter() {
     @RequiresApi(Build.VERSION_CODES.N)
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         val view: View = LayoutInflater.from(context).inflate(R.layout.row_layout,parent, false)
@@ -43,21 +43,8 @@ class ListAdapte(val context: Context, val list: ArrayList<Article>/*, val onArt
             articleTitle.text = list[position].title
         }
 
-        val dateFormatBefore = "yyyy-MM-dd'T'HH:mm:ss"
-        val dateFormatAfter = "MM'/'dd'('E')' HH':'mm"
-
-        //String型のフォーマットをSimpleDateFormat型に変換
-        val sdfBefore = SimpleDateFormat(dateFormatBefore)
-        val sdfAfter = SimpleDateFormat(dateFormatAfter)
-
-        sdfBefore.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"))
-        //変換したフォーマットにJSTで取得するという情報を与える
-        sdfAfter.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"))
-
-        //String型の日時のデータをパースしてDate型に変換
-        val dateBefore = sdfBefore.parse(list[position].date)
-
-        articleDate.text = sdfAfter.format(dateBefore).toString()
+        //articleDate.text = sdfAfter.format(dateBefore).toString()
+        articleDate.text = list[position].date
         return view
     }
 
